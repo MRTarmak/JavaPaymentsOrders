@@ -1,5 +1,7 @@
 package hse.service;
 
+import hse.exception.AccountNotFoundException;
+import hse.exception.PaymentsException;
 import hse.model.AccountEntity;
 import hse.repository.AccountRepository;
 import org.springframework.stereotype.Service;
@@ -19,7 +21,7 @@ public class PaymentsService {
     @Transactional
     public AccountEntity createAccount(UUID userId) {
         if (accountRepository.findByUserId(userId).isPresent()) {
-            throw new RuntimeException("The account already exists for user: " + userId);
+            throw new PaymentsException("The account already exists for user: " + userId);
         }
 
         AccountEntity account = AccountEntity.builder()
@@ -32,8 +34,9 @@ public class PaymentsService {
 
     @Transactional
     public AccountEntity topUpBalance(UUID userId, BigDecimal amount) {
-        AccountEntity account = accountRepository.findByUserId(userId).orElseThrow(() -> new RuntimeException("The " +
-                "account does not exist for user: " + userId));
+        AccountEntity account = accountRepository.findByUserId(userId).orElseThrow(() -> new AccountNotFoundException(
+                "The account was not found for user: " + userId
+        ));
 
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("The amount has to be positive");
@@ -48,6 +51,6 @@ public class PaymentsService {
     public BigDecimal getBalance(UUID userId) {
         return accountRepository.findByUserId(userId)
                 .map(AccountEntity::getBalance)
-                .orElseThrow(() -> new RuntimeException("The account already exists for user: " + userId));
+                .orElseThrow(() -> new PaymentsException("The account already exists for user: " + userId));
     }
 }
