@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  payments-db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: payment-db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - payment_data:/var/lib/postgresql/data
+
+  payments-service:
+    build:
+      context:
+        ./payments-service
+      dockerfile:
+        Dockerfile
+    ports:
+      - "8081:8080"
+    depends_on:
+      - payments-db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://payments-db:5432/payment-db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+
+volumes:
+  payment_data:

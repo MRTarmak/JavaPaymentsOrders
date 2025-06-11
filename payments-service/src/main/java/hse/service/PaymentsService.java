@@ -51,6 +51,8 @@ public class PaymentsService {
     public BigDecimal getBalance(UUID userId) {
         return accountRepository.findByUserId(userId)
                 .map(AccountEntity::getBalance)
-                .orElseThrow(() -> new PaymentsException("The account already exists for user: " + userId));
+                .orElseThrow(() -> new AccountNotFoundException(
+                        "The account was not found for user: " + userId
+                ));
     }
 }

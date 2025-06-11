@@ -23,6 +23,6 @@ public class AccountEntity {
     @Column(name = "user_id", nullable = false, unique = true)
     private UUID userId;
 
-    @Column(name = "balance", precision = 19, scale = 2)
+    @Column(name = "balance", precision = 19, scale = 2, nullable = false)
     private BigDecimal balance = BigDecimal.ZERO;
 }
