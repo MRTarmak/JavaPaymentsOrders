@@ -12,6 +12,17 @@ services:
     volumes:
       - payment_data:/var/lib/postgresql/data
 
+  orders-db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: order-db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - orders_data:/var/lib/postgresql/data
+
   payments-service:
     build:
       context:
@@ -27,5 +38,21 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: password
 
+  orders-service:
+    build:
+      context:
+        ./orders-service
+      dockerfile:
+        Dockerfile
+    ports:
+      - "8082:8080"
+    depends_on:
+      - orders-db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://orders-db:5432/order-db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+
 volumes:
   payment_data:
+  orders_data:
