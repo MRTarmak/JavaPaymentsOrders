@@ -1,6 +1,7 @@
 package hse.controller;
 
 import hse.service.PaymentsService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -16,19 +17,19 @@ public class PaymentsController {
     }
 
     @PostMapping("/create/{userId}")
-    public String createAccount(@PathVariable UUID userId) {
+    public ResponseEntity<String> createAccount(@PathVariable UUID userId) {
         paymentsService.createAccount(userId);
-        return "The account was successfully created for user: " + userId;
+        return ResponseEntity.ok("The account was successfully created for user: " + userId);
     }
 
     @PostMapping("/top-up/{userId}/{amount}")
-    public String topUpBalance(@PathVariable UUID userId, @PathVariable BigDecimal amount) {
+    public ResponseEntity<String> topUpBalance(@PathVariable UUID userId, @PathVariable BigDecimal amount) {
         paymentsService.topUpBalance(userId, amount);
-        return "The balance of user " + userId + " has been successfully increased by " + amount;
+        return ResponseEntity.ok("The balance of user " + userId + " has been successfully increased by " + amount);
     }
 
     @GetMapping("/{userId}")
-    public BigDecimal getBalance(@PathVariable UUID userId) {
-        return paymentsService.getBalance(userId);
+    public ResponseEntity<BigDecimal> getBalance(@PathVariable UUID userId) {
+        return ResponseEntity.ok(paymentsService.getBalance(userId));
     }
 }

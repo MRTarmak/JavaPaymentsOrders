@@ -16,7 +16,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     private static final String MESSAGE = "message";
 
     @ExceptionHandler(AccountNotFoundException.class)
-    public ResponseEntity<Object> handleFileNotFoundException(AccountNotFoundException ex) {
+    public ResponseEntity<Object> handleAccountNotFoundException(AccountNotFoundException ex) {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put(TIMESTAMP, LocalDateTime.now());
         body.put(MESSAGE, ex.getMessage());
@@ -25,7 +25,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(PaymentsException.class)
-    public ResponseEntity<Object> handleFileStorageException(PaymentsException ex) {
+    public ResponseEntity<Object> handlePaymentsException(PaymentsException ex) {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put(TIMESTAMP, LocalDateTime.now());
         body.put(MESSAGE, ex.getMessage());

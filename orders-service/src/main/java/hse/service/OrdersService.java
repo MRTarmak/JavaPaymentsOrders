@@ -2,6 +2,7 @@ package hse.service;
 
 import hse.dto.OrderDto;
 import hse.event.OrderCreatedEvent;
+import hse.exception.OrderNotFoundException;
 import hse.model.OrderEntity;
 import hse.model.OrderStatus;
 import hse.repository.OrderRepository;
@@ -76,5 +77,27 @@ public class OrdersService {
         ).toList();
     }
 
-    // TODO viewOrderStatus, viewOrdersListByUserId
+    @Transactional
+    public List<OrderDto> viewOrdersListByUserId(UUID userId) {
+        return orderRepository.findAll().stream().filter(order -> order.getUserId() == userId)
+                .map(order -> OrderDto.builder()
+                .id(order.getId())
+                .userId(order.getUserId())
+                .amount(order.getAmount())
+                .description(order.getDescription())
+                .status(order.getStatus())
+                .createdAt(order.getCreatedAt())
+                .updatedAt(order.getUpdatedAt())
+                .build()
+        ).toList();
+    }
+
+    @Transactional
+    public OrderStatus viewOrderStatus(UUID id) {
+        OrderEntity order = orderRepository.findById(id).orElseThrow(() -> new OrderNotFoundException(
+                "The order was not found with id: " + id
+        ));
+
+        return order.getStatus();
+    }
 }
