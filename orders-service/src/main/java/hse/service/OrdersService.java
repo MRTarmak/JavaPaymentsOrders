@@ -79,8 +79,7 @@ public class OrdersService {
 
     @Transactional
     public List<OrderDto> viewOrdersListByUserId(UUID userId) {
-        return orderRepository.findAll().stream().filter(order -> order.getUserId() == userId)
-                .map(order -> OrderDto.builder()
+        return orderRepository.findByUserId(userId).stream().map(order -> OrderDto.builder()
                 .id(order.getId())
                 .userId(order.getUserId())
                 .amount(order.getAmount())
