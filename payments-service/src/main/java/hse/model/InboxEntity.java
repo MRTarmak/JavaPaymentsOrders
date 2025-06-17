@@ -12,35 +12,32 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "outbox_event", schema = "public")
+@Table(name = "inbox_event", schema = "public")
 @Builder
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class OutboxEntity {
+public class InboxEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(name = "aggregate_type", nullable = false)
-    private String aggregateType;
+    @Column(name = "message_id", unique = true, nullable = false)
+    private String messageId;
 
-    @Column(name = "aggregate_id", nullable = false)
-    private UUID aggregateId;
-
-    @Column(name = "event_type", nullable = false)
-    private String eventType;
+    @Column(name = "topic", nullable = false)
+    private String topic;
 
     @Column(name = "payload", columnDefinition = "jsonb", nullable = false)
     @JdbcTypeCode(SqlTypes.JSON)
     private String payload;
 
-    @Column(name = "occurred_on", nullable = false)
+    @Column(name = "received_at", nullable = false)
     @Builder.Default
-    private LocalDateTime occurredOn = LocalDateTime.now();
+    private LocalDateTime receivedAt = LocalDateTime.now();
 
-    @Column(name = "processed")
+    @Column(name = "processed", nullable = false)
     @Builder.Default
     private boolean processed = false;
 }

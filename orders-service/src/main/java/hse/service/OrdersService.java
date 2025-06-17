@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hse.dto.OrderDto;
 import hse.event.OrderCreatedEvent;
+import hse.event.PaymentProcessedEvent;
 import hse.exception.OrderNotFoundException;
 import hse.exception.OrdersException;
 import hse.model.OrderEntity;
@@ -70,7 +71,7 @@ public class OrdersService {
             OutboxEntity outbox = OutboxEntity.builder()
                     .aggregateId(savedOrder.getId())
                     .aggregateType("Order")
-                    .eventType("OrderCreated")
+                    .eventType("ORDER_CREATED")
                     .payload(payload)
                     .processed(false)
                     .build();
@@ -125,5 +126,16 @@ public class OrdersService {
         ));
 
         return order.getStatus();
+    }
+
+    @Transactional
+    public void updateOrderStatus(PaymentProcessedEvent event, boolean finished) {
+        orderRepository.findById(event.orderId()).ifPresent(order -> {
+            if (order.getStatus() == OrderStatus.NEW) {
+                order.setStatus(finished ? OrderStatus.FINISHED : OrderStatus.CANCELLED);
+                order.setUpdatedAt(LocalDateTime.now());
+                orderRepository.save(order);
+            }
+        });
     }
 }

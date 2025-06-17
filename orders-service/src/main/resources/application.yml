@@ -12,6 +12,28 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+    consumer:
+      group-id: orders-service-group
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      properties:
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      ack-mode: manual
+      common-container:
+        retry:
+          enabled: true
+          initial-interval: 1000ms
+          max-attempts: 3
+          max-interval: 5000ms
+          multiplier: 2.0
+
+  jpa:
+    open-in-view: false
 
 flyway:
   enabled: true

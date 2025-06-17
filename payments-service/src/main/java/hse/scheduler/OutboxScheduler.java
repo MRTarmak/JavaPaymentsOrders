@@ -10,6 +10,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 
 import java.util.List;
 
@@ -24,30 +27,37 @@ public class OutboxScheduler {
     @Scheduled(fixedRate = 5000)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void processOutboxEvents() {
-        log.info("Attempting to process Orders Service outbox events...");
+        log.info("Attempting to process Payments Service outbox events...");
         List<OutboxEntity> events = outboxRepository.findByProcessedFalseOrderByOccurredOnAsc();
 
         if (events.isEmpty()) {
-            log.info("No unprocessed Orders Service outbox events found.");
+            log.info("No unprocessed Payments Service outbox events found.");
             return;
         }
 
         for (OutboxEntity event : events) {
             try {
-                kafkaTemplate.send("order.created", event.getId().toString(), event.getPayload())
-                        .whenComplete((result, ex) -> {
+                Message<String> message = MessageBuilder
+                        .withPayload(event.getPayload())
+                        .setHeader(KafkaHeaders.TOPIC, "payment.processed")
+                        .setHeader(KafkaHeaders.KEY, event.getId().toString())
+                        .build();
+
+                kafkaTemplate.send(message).whenComplete((result, ex) -> {
                     if (ex != null) {
-                        log.error("Failed to send Orders Service outbox event to Kafka: {}", event.getId(), ex);
+                        log.error("Failed to send Payments Service outbox event to Kafka: {}. Event will be retried.",
+                                event.getId(), ex);
                     } else {
-                        log.info("Successfully sent Orders Service outbox event to Kafka: {}", event.getId());
+                        log.info("Successfully sent Payments Service outbox event to Kafka: {}", event.getId());
                         event.setProcessed(true);
                         outboxRepository.save(event);
                     }
                 });
             } catch (Exception e) {
-                log.error("Unexpected error while processing Orders Service outbox event: {}", event.getId(), e);
+                log.error("Unexpected error while processing Payments Service outbox event: {}. Event will be retried.",
+                        event.getId(), e);
             }
         }
-        log.info("Finished processing Orders Service outbox events.");
+        log.info("Finished processing Payments Service outbox events.");
     }
 }
