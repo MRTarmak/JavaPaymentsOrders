@@ -23,6 +23,20 @@ services:
     volumes:
       - orders_data:/var/lib/postgresql/data
 
+  api-gateway:
+    build:
+      context:
+        ./api-gateway
+      dockerfile:
+        Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      payments-service:
+        condition: service_started
+      orders-service:
+        condition: service_started
+
   payments-service:
     build:
       context:
