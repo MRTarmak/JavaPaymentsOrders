@@ -1,11 +1,16 @@
 package hse.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import hse.dto.OrderDto;
 import hse.event.OrderCreatedEvent;
 import hse.exception.OrderNotFoundException;
+import hse.exception.OrdersException;
 import hse.model.OrderEntity;
 import hse.model.OrderStatus;
+import hse.model.OutboxEntity;
 import hse.repository.OrderRepository;
+import hse.repository.OutboxRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -18,11 +23,17 @@ import java.util.UUID;
 public class OrdersService {
     private final OrderRepository orderRepository;
 
-    private final KafkaProducerService kafkaProducerService;
+    private final OutboxRepository outboxRepository;
 
-    public OrdersService(OrderRepository orderRepository, KafkaProducerService kafkaProducerService) {
+    private final ObjectMapper objectMapper;
+
+
+    public OrdersService(OrderRepository orderRepository,
+                         OutboxRepository outboxRepository,
+                         ObjectMapper objectMapper) {
         this.orderRepository = orderRepository;
-        this.kafkaProducerService = kafkaProducerService;
+        this.outboxRepository = outboxRepository;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
@@ -50,7 +61,23 @@ public class OrdersService {
 
         OrderEntity savedOrder = orderRepository.save(order);
 
-        kafkaProducerService.sendOrderCreatedEvent(savedOrder.getId(), savedOrder.getUserId(), savedOrder.getAmount());
+        try {
+            String payload = objectMapper.writeValueAsString(new OrderCreatedEvent(
+                    savedOrder.getId(),
+                    savedOrder.getUserId(),
+                    savedOrder.getAmount()
+            ));
+            OutboxEntity outbox = OutboxEntity.builder()
+                    .aggregateId(savedOrder.getId())
+                    .aggregateType("Order")
+                    .eventType("OrderCreated")
+                    .payload(payload)
+                    .processed(false)
+                    .build();
+            outboxRepository.save(outbox);
+        } catch (JsonProcessingException e) {
+            throw new OrdersException("Event serialization error", e);
+        }
 
         return OrderDto.builder()
                 .id(savedOrder.getId())
